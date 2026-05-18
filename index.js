@@ -4,7 +4,7 @@ const cors = require('cors')
 const dotenv = require('dotenv')
 dotenv.config()
 const port = process.env.PORT
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const uri = process.env.MONGODB_URI;
 
@@ -19,22 +19,27 @@ const client = new MongoClient(uri, {
     }
 });
 
-const db=client.db('DriveFleet-Car')
-const CarCollection=db.collection('Cars')
+const db = client.db('DriveFleet-Car')
+const CarCollection = db.collection('Cars')
 
 async function run() {
     try {
         await client.connect();
 
-        app.get('/cars',async(req,res)=>{
-            const data=req.body;
-            const result=await CarCollection.find().toArray()
+        app.get('/cars', async (req, res) => {
+            const result = await CarCollection.find().toArray();
+            res.json(result);
+        });
+
+        app.get('/cars/:id', async (req, res) => {
+            const { id } = req.params;
+            const result = await CarCollection.findOne({ _id: new ObjectId(id) })
             res.json(result)
         })
 
-        app.post('/cars',async(req,res)=>{
-            const carsData=req.body;
-            const result=await CarCollection.insertOne(carsData)
+        app.post('/cars', async (req, res) => {
+            const carsData = req.body;
+            const result = await CarCollection.insertOne(carsData)
             res.json(result)
         })
 
