@@ -26,6 +26,12 @@ async function run() {
     try {
         await client.connect();
 
+        app.get('/cars',async(req,res)=>{
+            const data=req.body;
+            const result=await CarCollection.find().toArray()
+            res.json(result)
+        })
+
         app.post('/cars',async(req,res)=>{
             const carsData=req.body;
             const result=await CarCollection.insertOne(carsData)
