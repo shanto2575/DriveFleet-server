@@ -46,10 +46,22 @@ async function run() {
 
         //booking
 
+        app.get('/booking/:userId', async (req, res) => {
+            const { userId } = req.params;
+            const result = await bookingCollection.find({ userId: userId }).toArray()
+            res.json(result)
+            console.log(result)
+        })
 
         app.post('/booking',async(req,res)=>{
             const data=req.body;
             const result=await bookingCollection.insertOne(data)
+            res.json(result)
+        })
+
+        app.delete('/booking/:id',async(req,res)=>{
+            const {id}=req.params;
+            const result=await bookingCollection.deleteOne({_id:new ObjectId(id)})
             res.json(result)
         })
 
