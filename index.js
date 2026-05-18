@@ -27,6 +27,11 @@ async function run() {
     try {
         await client.connect();
 
+        app.get('/featured',async(req,res)=>{
+            const result=await CarCollection.find().limit(6).toArray()
+            res.json(result)
+        })
+
         app.get('/cars', async (req, res) => {
             const result = await CarCollection.find().toArray();
             res.json(result);
@@ -50,7 +55,7 @@ async function run() {
             const { userId } = req.params;
             const result = await bookingCollection.find({ userId: userId }).toArray()
             res.json(result)
-            console.log(result)
+            // console.log(result)
         })
 
         app.post('/booking',async(req,res)=>{
