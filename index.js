@@ -5,6 +5,7 @@ const dotenv = require('dotenv')
 dotenv.config()
 const port = process.env.PORT
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { createRemoteJWKSet, jwtVerify } = require('jose-cjs')
 
 const uri = process.env.MONGODB_URI;
 
@@ -21,14 +22,40 @@ const client = new MongoClient(uri, {
 
 const db = client.db('DriveFleet-Car')
 const CarCollection = db.collection('Cars')
-const bookingCollection=db.collection('booking')
+const bookingCollection = db.collection('booking')
 
+const JWKS = createRemoteJWKSet(
+    new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
+)
+const verifyToken = async (req, res, next) => {
+    const authHeaders = req.headers.authorization;
+    if (!authHeaders) {
+        res.status(401).json({ message: 'Unauthorization' })
+    }
+    const token = authHeaders.split(' ')[1]
+    if (!token) {
+        res.status(401).json({ message: 'Unauthorization' })
+        // console.log(token)
+    }
+    try {
+        const { payload } = await jwtVerify(token, JWKS)
+        // console.log(payload)
+        next()
+
+    } catch (error) {
+        return res.status(403).json({ message: 'forbidden' })
+    }
+
+
+
+}
 async function run() {
     try {
         await client.connect();
 
-        app.get('/featured',async(req,res)=>{
-            const result=await CarCollection.find().limit(6).toArray()
+
+        app.get('/featured', async (req, res) => {
+            const result = await CarCollection.find().limit(6).toArray()
             res.json(result)
         })
 
@@ -37,13 +64,13 @@ async function run() {
             res.json(result);
         });
 
-        app.get('/cars/:id', async (req, res) => {
+        app.get('/cars/:id', verifyToken, async (req, res) => {
             const { id } = req.params;
             const result = await CarCollection.findOne({ _id: new ObjectId(id) })
             res.json(result)
         })
 
-        app.post('/cars', async (req, res) => {
+        app.post('/cars',verifyToken, async (req, res) => {
             const carsData = req.body;
             const result = await CarCollection.insertOne(carsData)
             res.json(result)
@@ -58,15 +85,15 @@ async function run() {
             // console.log(result)
         })
 
-        app.post('/booking',async(req,res)=>{
-            const data=req.body;
-            const result=await bookingCollection.insertOne(data)
+        app.post('/booking', async (req, res) => {
+            const data = req.body;
+            const result = await bookingCollection.insertOne(data)
             res.json(result)
         })
 
-        app.delete('/booking/:id',async(req,res)=>{
-            const {id}=req.params;
-            const result=await bookingCollection.deleteOne({_id:new ObjectId(id)})
+        app.delete('/booking/:id',verifyToken, async (req, res) => {
+            const { id } = req.params;
+            const result = await bookingCollection.deleteOne({ _id: new ObjectId(id) })
             res.json(result)
         })
 
