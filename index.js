@@ -21,6 +21,7 @@ const client = new MongoClient(uri, {
 
 const db = client.db('DriveFleet-Car')
 const CarCollection = db.collection('Cars')
+const bookingCollection=db.collection('booking')
 
 async function run() {
     try {
@@ -40,6 +41,15 @@ async function run() {
         app.post('/cars', async (req, res) => {
             const carsData = req.body;
             const result = await CarCollection.insertOne(carsData)
+            res.json(result)
+        })
+
+        //booking
+
+
+        app.post('/booking',async(req,res)=>{
+            const data=req.body;
+            const result=await bookingCollection.insertOne(data)
             res.json(result)
         })
 
