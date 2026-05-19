@@ -65,6 +65,23 @@ async function run() {
             res.json(result)
         })
 
+        app.patch('/my-added-cars/:id',async(req,res)=>{
+            const id=req.params.id;
+            const update=req.body;
+            const result=await CarCollection.updateOne(
+                {_id:new ObjectId(id)},
+                {$set:update}
+            )
+            res.json(result)
+        })
+
+        app.delete('/my-added-cars/:id',async(req,res)=>{
+            const id=req.params.id;
+            const result=await CarCollection.deleteOne({_id:new ObjectId(id)})
+            res.json(result)
+            // console.log(result)
+        })
+
         app.get('/cars', async (req, res) => {
             const result = await CarCollection.find().toArray();
             res.json(result);
