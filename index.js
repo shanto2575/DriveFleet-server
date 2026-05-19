@@ -47,7 +47,6 @@ const verifyToken = async (req, res, next) => {
     }
 
 
-
 }
 async function run() {
     try {
@@ -59,31 +58,45 @@ async function run() {
             res.json(result)
         })
 
-        app.get('/my-added-cars/:email',async(req,res)=>{
-            const email=req.params.email;
-            const result=await CarCollection.find({userEmail:email}).toArray()
+        app.get('/my-added-cars/:email', verifyToken, async (req, res) => {
+            const email = req.params.email;
+            const result = await CarCollection.find({ userEmail: email }).toArray()
             res.json(result)
         })
 
-        app.patch('/my-added-cars/:id',async(req,res)=>{
-            const id=req.params.id;
-            const update=req.body;
-            const result=await CarCollection.updateOne(
-                {_id:new ObjectId(id)},
-                {$set:update}
+        app.patch('/my-added-cars/:id', verifyToken, async (req, res) => {
+            const id = req.params.id;
+            const update = req.body;
+            const result = await CarCollection.updateOne(
+                { _id: new ObjectId(id) },
+                { $set: update }
             )
             res.json(result)
         })
 
-        app.delete('/my-added-cars/:id',async(req,res)=>{
-            const id=req.params.id;
-            const result=await CarCollection.deleteOne({_id:new ObjectId(id)})
+        app.delete('/my-added-cars/:id', verifyToken, async (req, res) => {
+            const id = req.params.id;
+            const result = await CarCollection.deleteOne({ _id: new ObjectId(id) })
             res.json(result)
             // console.log(result)
         })
 
+        //cars
+
         app.get('/cars', async (req, res) => {
-            const result = await CarCollection.find().toArray();
+            const search = req.query.search || '';
+            const type = req.query.type || '';
+            const query = {}
+            if (search) {
+                query.carName = {
+                    $regex: search,
+                    $options: 'i'
+                }
+            }
+            if (type && type != 'All') {
+                query.carType = type;
+            }
+            const result = await CarCollection.find(query).toArray();
             res.json(result);
         });
 
@@ -95,6 +108,7 @@ async function run() {
 
         app.post('/cars', verifyToken, async (req, res) => {
             const carsData = req.body;
+            carsData.bookingCount=0;
             const result = await CarCollection.insertOne(carsData)
             res.json(result)
         })
@@ -120,8 +134,15 @@ async function run() {
 
         app.post('/booking', async (req, res) => {
             const data = req.body;
+            const carId = data.carId;
             const result = await bookingCollection.insertOne(data)
-            res.json(result)
+            const updateCar = await CarCollection.updateOne(
+                { _id: new ObjectId(carId) },
+                {
+                    $inc: { bookingCount: 1 }
+                }
+            )
+            res.json(result,updateCar)
         })
 
         app.delete('/booking/:id', verifyToken, async (req, res) => {
