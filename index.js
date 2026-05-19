@@ -3,7 +3,7 @@ const app = express()
 const cors = require('cors')
 const dotenv = require('dotenv')
 dotenv.config()
-const port = process.env.PORT
+const port = process.env.PORT || 5000
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const { createRemoteJWKSet, jwtVerify } = require('jose-cjs')
 
@@ -45,119 +45,120 @@ const verifyToken = async (req, res, next) => {
     } catch (error) {
         return res.status(403).json({ message: 'forbidden' })
     }
-
-
 }
-async function run() {
-    try {
-        // await client.connect();
+// async function run() {
+//     try {
+// await client.connect();
 
 
-        app.get('/featured', async (req, res) => {
-            const result = await CarCollection.find().limit(6).toArray()
-            res.json(result)
-        })
+app.get('/featured', async (req, res) => {
+    const result = await CarCollection.find().limit(6).toArray()
+    res.json(result)
+})
 
-        app.get('/my-added-cars/:email', verifyToken, async (req, res) => {
-            const email = req.params.email;
-            const result = await CarCollection.find({ userEmail: email }).toArray()
-            res.json(result)
-        })
+app.get('/my-added-cars/:id', verifyToken, async (req, res) => {
+    const id = req.params.id;
+    const result = await CarCollection.find({ userId: id }).toArray()
+    res.json(result)
+})
 
-        app.patch('/my-added-cars/:id', verifyToken, async (req, res) => {
-            const id = req.params.id;
-            const update = req.body;
-            const result = await CarCollection.updateOne(
-                { _id: new ObjectId(id) },
-                { $set: update }
-            )
-            res.json(result)
-        })
+app.patch('/my-added-cars/:id', verifyToken, async (req, res) => {
+    const id = req.params.id;
+    const update = req.body;
+    const result = await CarCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: update }
+    )
+    res.json(result)
+})
 
-        app.delete('/my-added-cars/:id', verifyToken, async (req, res) => {
-            const id = req.params.id;
-            const result = await CarCollection.deleteOne({ _id: new ObjectId(id) })
-            res.json(result)
-            // console.log(result)
-        })
+app.delete('/my-added-cars/:id', verifyToken, async (req, res) => {
+    const id = req.params.id;
+    const result = await CarCollection.deleteOne({ _id: new ObjectId(id) })
+    res.json(result)
+    // console.log(result)
+})
 
-        //cars
+//cars
 
-        app.get('/cars', async (req, res) => {
-            const search = req.query.search || '';
-            const type = req.query.type || '';
-            const query = {}
-            if (search) {
-                query.carName = {
-                    $regex: search,
-                    $options: 'i'
-                }
-            }
-            if (type && type != 'All') {
-                query.carType = type;
-            }
-            const result = await CarCollection.find(query).toArray();
-            res.json(result);
-        });
-
-        app.get('/cars/:id', verifyToken, async (req, res) => {
-            const { id } = req.params;
-            const result = await CarCollection.findOne({ _id: new ObjectId(id) })
-            res.json(result)
-        })
-
-        app.post('/cars', verifyToken, async (req, res) => {
-            const carsData = req.body;
-            carsData.bookingCount=0;
-            const result = await CarCollection.insertOne(carsData)
-            res.json(result)
-        })
-
-        app.delete("/cars/:id", async (req, res) => {
-            const id = req.params.id;
-
-            const result = await CarCollection.deleteOne({
-                _id: new ObjectId(id),
-            });
-            res.send(result);
-            // console.log(result)
-        });
-
-        //booking
-
-        app.get('/booking/:userId', async (req, res) => {
-            const { userId } = req.params;
-            const result = await bookingCollection.find({ userId: userId }).toArray()
-            res.json(result)
-            // console.log(result)
-        })
-
-        app.post('/booking', async (req, res) => {
-            const data = req.body;
-            const carId = data.carId;
-            const result = await bookingCollection.insertOne(data)
-            const updateCar = await CarCollection.updateOne(
-                { _id: new ObjectId(carId) },
-                {
-                    $inc: { bookingCount: 1 }
-                }
-            )
-            res.json(result,updateCar)
-        })
-
-        app.delete('/booking/:id', verifyToken, async (req, res) => {
-            const { id } = req.params;
-            const result = await bookingCollection.deleteOne({ _id: new ObjectId(id) })
-            res.json(result)
-        })
-
-        // await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
-    } finally {
-        // await client.close();
+app.get('/cars', async (req, res) => {
+    const search = req.query.search || '';
+    const type = req.query.type || '';
+    const query = {}
+    if (search) {
+        query.carName = {
+            $regex: search,
+            $options: 'i'
+        }
     }
-}
-run().catch(console.dir);
+    if (type && type != 'All') {
+        query.carType = type;
+    }
+    const result = await CarCollection.find(query).toArray();
+    res.json(result);
+});
+
+app.get('/cars/:id', verifyToken, async (req, res) => {
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+    }
+    const result = await CarCollection.findOne({ _id: new ObjectId(id) })
+    res.json(result)
+})
+
+app.post('/cars', verifyToken, async (req, res) => {
+    const carsData = req.body;
+    carsData.bookingCount = 0;
+    const result = await CarCollection.insertOne(carsData)
+    res.json(result)
+})
+
+app.delete("/cars/:id", async (req, res) => {
+    const id = req.params.id;
+
+    const result = await CarCollection.deleteOne({
+        _id: new ObjectId(id),
+    });
+    res.send(result);
+    // console.log(result)
+});
+
+//booking
+
+app.get('/booking/:userId', async (req, res) => {
+    const { userId } = req.params;
+    const result = await bookingCollection.find({ userId: userId }).toArray()
+    res.json(result)
+    // console.log(result)
+})
+
+app.post('/booking', async (req, res) => {
+    const data = req.body;
+    const carId = data.carId;
+    const result = await bookingCollection.insertOne(data)
+    const updateCar = await CarCollection.updateOne(
+        { _id: new ObjectId(carId) },
+        {
+            $inc: { bookingCount: 1 }
+        }
+    )
+    res.json({ result, updateCar })
+})
+
+app.delete('/booking/:id', verifyToken, async (req, res) => {
+    const { id } = req.params;
+    const result = await bookingCollection.deleteOne({ _id: new ObjectId(id) })
+    res.json(result)
+})
+
+// await client.db("admin").command({ ping: 1 });
+//         console.log("Pinged your deployment. You successfully connected to MongoDB!");
+//     } finally {
+// await client.close();
+//     }
+// }
+// run().catch(console.dir);
 
 app.get('/', (req, res) => {
     res.json('Server is Running Fine')
