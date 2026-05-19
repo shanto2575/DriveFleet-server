@@ -56,7 +56,7 @@ app.get('/featured', async (req, res) => {
     res.json(result)
 })
 
-app.get('/my-added-cars/:id', verifyToken, async (req, res) => {
+app.get('/my-added-cars/:id', async (req, res) => {
     const id = req.params.id;
     const result = await CarCollection.find({ userId: id }).toArray()
     res.json(result)
@@ -98,11 +98,9 @@ app.get('/cars', async (req, res) => {
     res.json(result);
 });
 
-app.get('/cars/:id', verifyToken, async (req, res) => {
+app.get('/cars/:id', async (req, res) => {
     const { id } = req.params;
-    if (!ObjectId.isValid(id)) {
-        return res.status(400).json({ message: "Invalid ID" });
-    }
+    
     const result = await CarCollection.findOne({ _id: new ObjectId(id) })
     res.json(result)
 })
