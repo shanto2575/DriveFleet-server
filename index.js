@@ -59,6 +59,12 @@ async function run() {
             res.json(result)
         })
 
+        app.get('/my-added-cars/:email',async(req,res)=>{
+            const email=req.params.email;
+            const result=await CarCollection.find({userEmail:email}).toArray()
+            res.json(result)
+        })
+
         app.get('/cars', async (req, res) => {
             const result = await CarCollection.find().toArray();
             res.json(result);
@@ -70,11 +76,21 @@ async function run() {
             res.json(result)
         })
 
-        app.post('/cars',verifyToken, async (req, res) => {
+        app.post('/cars', verifyToken, async (req, res) => {
             const carsData = req.body;
             const result = await CarCollection.insertOne(carsData)
             res.json(result)
         })
+
+        app.delete("/cars/:id", async (req, res) => {
+            const id = req.params.id;
+
+            const result = await CarCollection.deleteOne({
+                _id: new ObjectId(id),
+            });
+            res.send(result);
+            // console.log(result)
+        });
 
         //booking
 
@@ -91,7 +107,7 @@ async function run() {
             res.json(result)
         })
 
-        app.delete('/booking/:id',verifyToken, async (req, res) => {
+        app.delete('/booking/:id', verifyToken, async (req, res) => {
             const { id } = req.params;
             const result = await bookingCollection.deleteOne({ _id: new ObjectId(id) })
             res.json(result)
