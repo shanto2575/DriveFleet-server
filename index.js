@@ -28,7 +28,7 @@ const JWKS = createRemoteJWKSet(
     new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
 )
 const verifyToken = async (req, res, next) => {
-    const authHeaders = req.headers.authorization;
+    const authHeaders = req.headers?.authorization;
     if (!authHeaders) {
         res.status(401).json({ message: 'Unauthorization' })
     }
@@ -43,6 +43,7 @@ const verifyToken = async (req, res, next) => {
         next()
 
     } catch (error) {
+        console.log(error)
         return res.status(403).json({ message: 'forbidden' })
     }
 }
@@ -56,7 +57,7 @@ app.get('/featured', async (req, res) => {
     res.json(result)
 })
 
-app.get('/my-added-cars/:id',verifyToken, async (req, res) => {
+app.get('/my-added-cars/:id', verifyToken, async (req, res) => {
     const id = req.params.id;
     const result = await CarCollection.find({ userId: id }).toArray()
     res.json(result)
@@ -98,9 +99,9 @@ app.get('/cars', async (req, res) => {
     res.json(result);
 });
 
-app.get('/cars/:id',verifyToken, async (req, res) => {
+app.get('/cars/:id', verifyToken, async (req, res) => {
     const { id } = req.params;
-    
+
     const result = await CarCollection.findOne({ _id: new ObjectId(id) })
     res.json(result)
 })
@@ -112,26 +113,17 @@ app.post('/cars', verifyToken, async (req, res) => {
     res.json(result)
 })
 
-app.delete("/cars/:id", async (req, res) => {
-    const id = req.params.id;
-
-    const result = await CarCollection.deleteOne({
-        _id: new ObjectId(id),
-    });
-    res.send(result);
-    // console.log(result)
-});
 
 //booking
 
-app.get('/booking/:userId',verifyToken, async (req, res) => {
+app.get('/booking/:userId', verifyToken, async (req, res) => {
     const { userId } = req.params;
     const result = await bookingCollection.find({ userId: userId }).toArray()
     res.json(result)
     // console.log(result)
 })
 
-app.post('/booking',verifyToken, async (req, res) => {
+app.post('/booking', verifyToken, async (req, res) => {
     const data = req.body;
     const carId = data.carId;
     const result = await bookingCollection.insertOne(data)
