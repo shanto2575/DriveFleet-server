@@ -56,7 +56,7 @@ app.get('/featured', async (req, res) => {
     res.json(result)
 })
 
-app.get('/my-added-cars/:id', async (req, res) => {
+app.get('/my-added-cars/:id',verifyToken, async (req, res) => {
     const id = req.params.id;
     const result = await CarCollection.find({ userId: id }).toArray()
     res.json(result)
@@ -98,7 +98,7 @@ app.get('/cars', async (req, res) => {
     res.json(result);
 });
 
-app.get('/cars/:id', async (req, res) => {
+app.get('/cars/:id',verifyToken, async (req, res) => {
     const { id } = req.params;
     
     const result = await CarCollection.findOne({ _id: new ObjectId(id) })
@@ -124,14 +124,14 @@ app.delete("/cars/:id", async (req, res) => {
 
 //booking
 
-app.get('/booking/:userId', async (req, res) => {
+app.get('/booking/:userId',verifyToken, async (req, res) => {
     const { userId } = req.params;
     const result = await bookingCollection.find({ userId: userId }).toArray()
     res.json(result)
     // console.log(result)
 })
 
-app.post('/booking', async (req, res) => {
+app.post('/booking',verifyToken, async (req, res) => {
     const data = req.body;
     const carId = data.carId;
     const result = await bookingCollection.insertOne(data)
