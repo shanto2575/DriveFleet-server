@@ -99,14 +99,14 @@ app.get('/cars', async (req, res) => {
     res.json(result);
 });
 
-app.get('/cars/:id', verifyToken, async (req, res) => {
+app.get('/cars/:id', async (req, res) => {
     const { id } = req.params;
 
     const result = await CarCollection.findOne({ _id: new ObjectId(id) })
     res.json(result)
 })
 
-app.post('/cars', verifyToken, async (req, res) => {
+app.post('/cars', async (req, res) => {
     const carsData = req.body;
     carsData.bookingCount = 0;
     const result = await CarCollection.insertOne(carsData)
