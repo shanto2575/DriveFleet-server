@@ -59,7 +59,7 @@ app.get('/featured', async (req, res) => {
 
 app.get('/my-added-cars/:id', verifyToken, async (req, res) => {
     const id = req.params.id;
-    const result = await CarCollection.find({ userId: id }).toArray()
+    const result = await CarCollection.find({ userId: id }).sort({ _id: -1 }).toArray()
     res.json(result)
 })
 
@@ -68,7 +68,7 @@ app.patch('/my-added-cars/:id', verifyToken, async (req, res) => {
     const update = req.body;
     const result = await CarCollection.updateOne(
         { _id: new ObjectId(id) },
-        { $set: update }
+        { $set: update },
     )
     res.json(result)
 })
@@ -105,7 +105,7 @@ app.get('/cars', async (req, res) => {
     try {
         // Fetch paginated data and total count in parallel
         const [cars, totalCars] = await Promise.all([
-            CarCollection.find(query).skip(skip).limit(limit).toArray(),
+            CarCollection.find(query).skip(skip).sort({ _id: -1 }).limit(limit).toArray(),
             CarCollection.countDocuments(query)
         ]);
 
@@ -142,7 +142,7 @@ app.post('/cars', async (req, res) => {
 
 app.get('/booking/:userId', verifyToken, async (req, res) => {
     const { userId } = req.params;
-    const result = await bookingCollection.find({ userId: userId }).toArray()
+    const result = await bookingCollection.find({ userId: userId }).sort({ createdAt: -1 }).toArray()
     res.json(result)
     // console.log(result)
 })
