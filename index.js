@@ -85,18 +85,42 @@ app.delete('/my-added-cars/:id', verifyToken, async (req, res) => {
 app.get('/cars', async (req, res) => {
     const search = req.query.search || '';
     const type = req.query.type || '';
-    const query = {}
+    
+    // Pagination parameters with default values
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
+    const skip = (page - 1) * limit;
+
+    const query = {};
     if (search) {
         query.carName = {
             $regex: search,
             $options: 'i'
-        }
+        };
     }
-    if (type && type != 'All') {
+    if (type && type !== 'All') {
         query.carType = type;
     }
-    const result = await CarCollection.find(query).toArray();
-    res.json(result);
+
+    try {
+        // Fetch paginated data and total count in parallel
+        const [cars, totalCars] = await Promise.all([
+            CarCollection.find(query).skip(skip).limit(limit).toArray(),
+            CarCollection.countDocuments(query)
+        ]);
+
+        const totalPages = Math.ceil(totalCars / limit);
+
+        res.json({
+            cars,
+            totalPages,
+            currentPage: page,
+            totalCars
+        });
+    } catch (error) {
+        console.error("Error fetching cars:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
 });
 
 app.get('/cars/:id', async (req, res) => {
